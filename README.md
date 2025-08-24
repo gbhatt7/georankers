@@ -1,69 +1,67 @@
-# React + TypeScript + Vite
+React + Vite App (Dockerized)
+This project is a React application built with Vite and bundled inside a Docker container for easy deployment.
+It uses Node.js to build the app and Nginx to serve it in production.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+🚀 Features
+React with Vite and SWC plugin for fast builds
 
-Currently, two official plugins are available:
+Dockerized workflow for portability
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Nginx for serving optimized production builds
 
-## Expanding the ESLint configuration
+Custom Vite config with alias support (@ → src)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+📂 Project Structure
+.
+├── Dockerfile
+├── nginx.conf
+├── package.json
+├── vite.config.ts
+├── src/
+└── public/
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+⚙️ Vite Config
+Runs dev server on :: (all interfaces)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Default dev port: 8080
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Aliases @ → ./src
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+{
+  server: {
+    host: "::",
+    port: 8080,
+  }
+}
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+🐳 Running with Docker
+Build Docker Image
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+docker build -t my-vite-app .
+
+Run Container
+
+docker run -p 5173:5173 my-vite-app
+
+Now the app will be available at:
+
+👉 http://localhost:5173
+
+🛠 Development (without Docker)
+If you want to run locally:
+
+npm install
+npm run dev
+
+The dev server will run at: http://localhost:8080
+
+📦 Production Build (without Docker)
+npm run build
+npm run preview
+
+Runs the app locally with Vite’s preview server.
+
+🔧 Nginx Config
+The app is served by Nginx using the config from nginx.conf.
+
+Static files are located at /usr/share/nginx/html.
