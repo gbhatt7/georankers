@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context";
 import { Layout } from "@/components/Layout";
 import { InsightCards } from "@/components/results/InsightCards";
 import { RecommendedActions } from "@/components/results/RecommendedActions";
@@ -11,37 +12,40 @@ import { mockInsightsData } from "@/data/mockInsights";
 import { ArrowLeft, Calendar, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface StoredData {
+interface ResultsData {
   brand: string;
   keywords: string[];
-  timestamp: number;
+  cardCount: "4" | "5";
+  isExample?: boolean;
 }
 
 export default function Results() {
-  const [brandData, setBrandData] = useState<StoredData | null>(null);
+  const [resultsData, setResultsData] = useState<ResultsData | null>(null);
   const [currentTab, setCurrentTab] = useState("queries");
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const storedData = localStorage.getItem('aiSearchData');
-    if (storedData) {
-      try {
-        const data = JSON.parse(storedData);
-        setBrandData(data);
-      } catch (error) {
-        console.error("Failed to parse stored data:", error);
-        navigate("/input");
-      }
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    // Get data from navigation state
+    if (location.state) {
+      const data = location.state as ResultsData;
+      setResultsData(data);
     } else {
       navigate("/input");
     }
-  }, [navigate]);
+  }, [user, navigate, location.state]);
 
   const handleViewQueries = () => setCurrentTab("queries");
   const handleViewSources = () => setCurrentTab("sources");
   const handleViewAttributes = () => setCurrentTab("attributes");
 
-  if (!brandData) {
+  if (!resultsData) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-20">
@@ -57,8 +61,8 @@ export default function Results() {
     );
   }
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
+  const formatDate = () => {
+    return new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -73,43 +77,44 @@ export default function Results() {
         {/* Header */}
         <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b">
           <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-4">
               {/* Brand Info */}
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-3">
-                  {/* Brand Avatar */}
-                  <div className="w-10 h-10 rounded-lg bg-gradient-hero flex items-center justify-center text-white font-bold">
-                    {brandData.brand.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">{brandData.brand}</h1>
-                    <p className="text-sm text-muted-foreground">
-                      These insights come directly from AI answers.
-                    </p>
-                  </div>
+              <div className="flex items-center space-x-3">
+                {/* Brand Avatar */}
+                <div className="w-10 h-10 rounded-lg bg-gradient-hero flex items-center justify-center text-white font-bold">
+                  {resultsData.brand.charAt(0).toUpperCase()}
                 </div>
-                
+                <div>
+                  <h1 className="font-semibold text-lg">{resultsData.brand}</h1>
+                  <p className="text-sm text-muted-foreground">
+                    These insights come directly from AI answers.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Keywords and Stats Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Keywords */}
-                <div className="hidden md:flex items-center space-x-2">
-                  {brandData.keywords.map((keyword, index) => (
+                <div className="flex flex-wrap items-center gap-2">
+                  {resultsData.keywords.map((keyword, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {keyword}
                     </Badge>
                   ))}
                 </div>
-              </div>
 
-              {/* Stats */}
-              <div className="flex items-center space-x-6 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Queries analyzed:</span>
-                  <span className="font-semibold">{mockInsightsData.summary.total_queries}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Generated:</span>
-                  <span className="font-semibold">{formatDate(brandData.timestamp)}</span>
+                {/* Stats */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Search className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Queries analyzed:</span>
+                    <span className="font-semibold">{mockInsightsData.summary.total_queries}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Generated:</span>
+                    <span className="font-semibold">{formatDate()}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -130,28 +135,11 @@ export default function Results() {
             </Button>
           </div>
 
-          {/* Keywords Display for Mobile */}
-          <div className="md:hidden mb-6">
-            <Card className="bg-muted/20 border-0">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Keywords analyzed:</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {brandData.keywords.map((keyword, index) => (
-                    <Badge key={index} variant="secondary">
-                      {keyword}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Insight Cards */}
           <InsightCards
             data={mockInsightsData}
+            cardCount={resultsData.cardCount}
             onViewQueries={handleViewQueries}
             onViewSources={handleViewSources}
             onViewAttributes={handleViewAttributes}

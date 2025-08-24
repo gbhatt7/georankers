@@ -1,6 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, Search, BarChart3 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Star, Search, BarChart3, User, LogOut } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +11,13 @@ interface LayoutProps {
 
 export const Layout = ({ children, showNavigation = true }: LayoutProps) => {
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-bg">
@@ -18,12 +27,46 @@ export const Layout = ({ children, showNavigation = true }: LayoutProps) => {
             <div className="flex h-16 items-center justify-between">
               {/* Logo */}
               <Link to="/" className="flex items-center space-x-2">
-                <span className="text-3xl font-bold gradient-text">GeoRankers</span>
+                <span className="text-2xl md:text-3xl font-bold gradient-text">GeoRankers</span>
               </Link>
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-3">
-                {location.pathname === '/login' ? (
+                {user ? (
+                  <>
+                    {/* Desktop Profile */}
+                    <div className="hidden md:flex items-center space-x-2">
+                      <User className="w-4 h-4" />
+                      <span className="text-sm text-muted-foreground">
+                        Welcome, {user.name}
+                      </span>
+                    </div>
+                    
+                    {/* Profile Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="relative h-10 w-10 rounded-full p-0">
+                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuItem className="flex items-center space-x-2 md:hidden">
+                          <User className="w-4 h-4" />
+                          <span>{user.name}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={handleLogout}
+                          className="flex items-center space-x-2 text-destructive focus:text-destructive"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Logout</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : location.pathname === '/login' ? (
                   <Link to="/register">
                     <Button variant="outline" size="sm">Register</Button>
                   </Link>

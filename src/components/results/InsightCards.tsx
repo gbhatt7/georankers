@@ -15,12 +15,13 @@ import {
 
 interface InsightCardsProps {
   data: any;
+  cardCount: "4" | "5";
   onViewQueries: () => void;
   onViewSources: () => void;
   onViewAttributes: () => void;
 }
 
-export const InsightCards = ({ data, onViewQueries, onViewSources, onViewAttributes }: InsightCardsProps) => {
+export const InsightCards = ({ data, cardCount, onViewQueries, onViewSources, onViewAttributes }: InsightCardsProps) => {
   const { summary, insights } = data;
 
   return (
@@ -164,7 +165,7 @@ export const InsightCards = ({ data, onViewQueries, onViewSources, onViewAttribu
       </Card>
 
       {/* Card 5 - Brand Defense Risk (Conditional) */}
-      {insights.brand_defense?.enabled && (
+      {cardCount === "5" && insights.brand_defense?.enabled && (
         <Card className="card-gradient border-0 col-span-full md:col-span-1">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">

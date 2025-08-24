@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,16 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCheckVisibility = () => {
+    if (user) {
+      navigate("/input");
+    } else {
+      navigate("/login");
+    }
+  };
   const features = [
     {
       icon: <Search className="w-8 h-8 text-primary" />,
@@ -76,19 +87,42 @@ const Index = () => {
                 leading AI models like ChatGPT and Gemini.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
-                  <Button variant="hero" size="lg" className="text-lg px-8">
-                    <Zap className="w-5 h-5 mr-2" />
-                    Get Started Free
-                  </Button>
-                </Link>
-                <Link to="/input">
-                  <Button variant="outline" size="lg" className="text-lg px-8">
-                    <Search className="w-5 h-5 mr-2" />
-                    Check Your Visibility
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                {user ? (
+                  // Logged in → only "Check Your Visibility" button
+                  <Link to="/input" className="w-full sm:w-auto">
+                    <Button
+                      variant="hero"
+                      size="lg"
+                      className="text-lg px-8 w-full sm:w-auto"
+                    >
+                      New Analysis
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                ) : (
+                  // Logged out → show "Get Started Free" + "Check Your Visibility"
+                  <>
+                    <Link to="/register" className="w-full sm:w-auto">
+                      <Button
+                        variant="hero"
+                        size="lg"
+                        className="text-lg px-8 w-full sm:w-auto"
+                      >
+                        <Zap className="w-5 h-5 mr-2" />
+                        Get Started Free
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="text-lg px-8 w-full sm:w-auto"
+                      onClick={handleCheckVisibility}
+                    >
+                      Check Your Visibility
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -179,27 +213,28 @@ const Index = () => {
                 search visibility. Get your free analysis in minutes.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/input">
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="text-lg px-8 bg-white text-primary hover:bg-white/90"
-                  >
-                    <Search className="w-5 h-5 mr-2" />
-                    Check Your Visibility
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="text-lg px-8 border-white text-muted-foreground hover:bg-white hover:text-primary"
-                  >
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Get Full Access
-                  </Button>
-                </Link>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="text-lg px-8 bg-white text-primary hover:bg-white/90"
+                  onClick={handleCheckVisibility}
+                >
+                  <Search className="w-5 h-5 mr-2" />
+                  {user ? "New Analysis" : "Check Your Visibility"}
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                {!user && (
+                  <Link to="/register">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="text-lg px-8 border-white text-muted-foreground hover:bg-white hover:text-primary"
+                    >
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      Get Full Access
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

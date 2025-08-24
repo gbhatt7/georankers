@@ -1,174 +1,166 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layout } from "@/components/Layout";
-import { Search, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 
-export default function Register() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
+const Register = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { register, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       toast({
-        title: "Password mismatch",
-        description: "Please ensure both passwords match.",
+        title: "Passwords don't match",
+        description: "Please make sure both password fields match.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsLoading(true);
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Simulate registration API call
-    setTimeout(() => {
+    try {
+      await register(email, password, name);
       toast({
         title: "Account created!",
-        description: "Welcome to GeoRankers AI. You can now check your AI search visibility.",
+        description: "Welcome to AI Search Visibility Checker.",
       });
-      navigate("/input");
-      setIsLoading(false);
-    }, 1500);
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: "Please try again with different information.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-20">
-        <div className="max-w-md mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-hero hero-glow">
-                <Search className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+      
+      <Card className="w-full max-w-md bg-gradient-card border-0 shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-blue-600">
+            Create account
+          </CardTitle>
+          <CardDescription>
+            Join AI search visibility dashboard today
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="bg-background"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-background pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </div>
-            <h1 className="text-3xl font-bold mb-2">Get Started</h1>
-            <p className="text-muted-foreground">Create your account to track AI search visibility</p>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="bg-background"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link
+              to="/login"
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
+            </Link>
           </div>
-
-          {/* Registration Form */}
-          <Card className="card-gradient border-0">
-            <CardHeader className="text-center pb-4">
-              <CardTitle>Create Account</CardTitle>
-              <CardDescription>
-                Join thousands of brands optimizing for AI search
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="john@company.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Create a strong password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  variant="hero"
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Creating account..." : "Create Account"}
-                </Button>
-              </form>
-            </CardContent>
-            <CardFooter className="justify-center">
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link to="/login" className="text-primary hover:underline font-medium">
-                  Sign in here
-                </Link>
-              </p>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    </Layout>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
+
+export default Register;

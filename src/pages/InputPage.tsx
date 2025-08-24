@@ -1,21 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layout } from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, X, Plus, Search, Building2, Tags, ExternalLink } from "lucide-react";
+import { Loader2, X, Plus, Search, Building2, Tags, ExternalLink, Grid3X3, Grid2X2 } from "lucide-react";
 
 export default function InputPage() {
   const [brand, setBrand] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [cardCount, setCardCount] = useState<"4" | "5">("4");
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const addKeyword = () => {
     if (
@@ -68,6 +78,7 @@ export default function InputPage() {
         state: {
           brand: brand.trim(),
           keywords,
+          cardCount,
         },
       });
     }, 2000);
@@ -78,6 +89,7 @@ export default function InputPage() {
       state: {
         brand: "Kommunicate",
         keywords: ["customer support", "live chat", "chatbot"],
+        cardCount: "5",
         isExample: true,
       },
     });
@@ -187,6 +199,32 @@ export default function InputPage() {
                         {keywords.length} of 3 keywords added
                       </p>
                     </div>
+                  </div>
+
+                  {/* Card Count Selection */}
+                  <div className="space-y-3">
+                    <Label>Number of Insight Cards</Label>
+                    <RadioGroup value={cardCount} onValueChange={(value: "4" | "5") => setCardCount(value)}>
+                      <div className="flex items-center space-x-6">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="4" id="cards-4" />
+                          <Label htmlFor="cards-4" className="flex items-center space-x-2 cursor-pointer">
+                            <Grid2X2 className="w-4 h-4" />
+                            <span>4 Cards</span>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="5" id="cards-5" />
+                          <Label htmlFor="cards-5" className="flex items-center space-x-2 cursor-pointer">
+                            <Grid3X3 className="w-4 h-4" />
+                            <span>5 Cards</span>
+                          </Label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                    <p className="text-sm text-gray-500">
+                      Choose the number of insight cards to display in your results
+                    </p>
                   </div>
 
                   {/* Submit Button */}
