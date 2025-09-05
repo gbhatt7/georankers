@@ -1,95 +1,101 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState } from "react";
+import {
+  login as loginAPI,
+  register as registerAPI,
+  LoginResponse,
+  RegisterRequest,
+} from "@/apiHelpers";
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
-
+/* =====================
+   TYPES
+   ===================== */
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  user: LoginResponse["user"] | null;
   isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    appName?: string
+  ) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<LoginResponse["user"] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
+  /* =====================
+     LOGIN
+     ===================== */
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock login - in real app, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simple validation
-      if (email && password.length >= 6) {
-        const userData = {
-          id: Date.now().toString(),
-          email,
-          name: email.split('@')[0]
-        };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        throw new Error('Invalid credentials');
+      const res = await loginAPI({ email, password });
+      if (res.user) {
+        setUser(res.user);
+        localStorage.setItem("access_token", res.access_token);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  /* =====================
+     REGISTER (auto-login after success)
+     ===================== */
+  const register = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    appName: string = "DefaultApp"
+  ) => {
     setIsLoading(true);
     try {
-      // Mock registration - in real app, this would call an API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (email && password.length >= 6 && name) {
-        const userData = {
-          id: Date.now().toString(),
-          email,
-          name
-        };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        throw new Error('Invalid registration data');
-      }
+      const payload: RegisterRequest = {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        app_name: appName,
+      };
+
+      await registerAPI(payload);
+
+      // Auto-login after register
+      await login(email, password);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* =====================
+     LOGOUT
+     ===================== */
   const logout = () => {
+    localStorage.removeItem("access_token");
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+/* =====================
+   HOOK
+   ===================== */
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+};

@@ -14,7 +14,6 @@ import {
   Search,
   TrendingUp,
   Users,
-  Globe,
   Shield,
   ArrowRight,
   CheckCircle,
@@ -22,7 +21,7 @@ import {
 } from "lucide-react";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleCheckVisibility = () => {
@@ -32,6 +31,7 @@ const Index = () => {
       navigate("/login");
     }
   };
+
   const features = [
     {
       icon: <Search className="w-8 h-8 text-primary" />,
@@ -66,6 +66,17 @@ const Index = () => {
     { number: "5x", label: "Higher value per AI visitor" },
   ];
 
+  // ✅ Handle loading state to prevent blank page
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen text-lg">
+          Loading...
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="min-h-screen">
@@ -88,7 +99,6 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {user ? (
-                  // Logged in → only "Check Your Visibility" button
                   <Link to="/input" className="w-full sm:w-auto">
                     <Button
                       variant="hero"
@@ -100,7 +110,6 @@ const Index = () => {
                     </Button>
                   </Link>
                 ) : (
-                  // Logged out → show "Get Started Free" + "Check Your Visibility"
                   <>
                     <Link to="/register" className="w-full sm:w-auto">
                       <Button

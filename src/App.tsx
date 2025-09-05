@@ -5,14 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth-context";
 import Index from "./pages/Index";
-// import Login from "./pages/Login";
-// import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import InputPage from "./pages/InputPage";
 import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
-import {ScrollToTop} from "./ScrollToTop";
+import { ScrollToTop } from "./ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +21,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-        <ScrollToTop />
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />

@@ -25,7 +25,9 @@ const Login = () => {
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
     } catch (error) {
       toast({
         title: "Login failed",

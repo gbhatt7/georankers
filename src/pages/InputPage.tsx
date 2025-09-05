@@ -9,14 +9,15 @@ import { Layout } from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, X, Plus, Search, Building2, Tags, ExternalLink, Grid3X3, Grid2X2 } from "lucide-react";
+import { Loader2, X, Plus, Search, Globe, Tags, ExternalLink, CheckCircle, XCircle } from "lucide-react";
 
 export default function InputPage() {
   const [brand, setBrand] = useState("");
   const [currentKeyword, setCurrentKeyword] = useState("");
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [cardCount, setCardCount] = useState<"4" | "5">("4");
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [dnsStatus, setDnsStatus] = useState<"valid" | "invalid" | "checking" | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -49,13 +50,65 @@ export default function InputPage() {
     }
   };
 
+  const checkDNS = async (url: string) => {
+    if (!url.trim()) {
+      setDnsStatus(null);
+      return;
+    }
+
+    setDnsStatus("checking");
+    
+    // Simulate DNS check with timeout
+    setTimeout(() => {
+      try {
+        // More comprehensive URL validation
+        let testUrl = url.trim();
+        
+        // Add protocol if missing
+        if (!testUrl.match(/^https?:\/\//)) {
+          testUrl = 'https://' + testUrl;
+        }
+        
+        const urlObj = new URL(testUrl);
+        const hostname = urlObj.hostname;
+        
+        // Check if hostname looks valid
+        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+        const isValid = domainRegex.test(hostname) && hostname.includes('.');
+        
+        setDnsStatus(isValid ? "valid" : "invalid");
+      } catch {
+        setDnsStatus("invalid");
+      }
+    }, 1000);
+  };
+
+  const handleWebsiteChange = (value: string) => {
+    setBrand(value);
+    // Trigger DNS check on key release (after a short delay)
+    const timeoutId = setTimeout(() => {
+      checkDNS(value);
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!brand.trim()) {
       toast({
-        title: "Brand required",
-        description: "Please enter your brand or website name.",
+        title: "Website URL required",
+        description: "Please enter your website URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (dnsStatus !== "valid") {
+      toast({
+        title: "Invalid website URL",
+        description: "Please enter a valid website URL that exists.",
         variant: "destructive",
       });
       return;
@@ -76,9 +129,8 @@ export default function InputPage() {
       setIsLoading(false);
       navigate("/results", {
         state: {
-          brand: brand.trim(),
+          website: brand.trim(),
           keywords,
-          cardCount,
         },
       });
     }, 2000);
@@ -87,9 +139,8 @@ export default function InputPage() {
   const showExampleOutput = () => {
     navigate("/results", {
       state: {
-        brand: "Kommunicate",
+        website: "kommunicate.io",
         keywords: ["customer support", "live chat", "chatbot"],
-        cardCount: "5",
         isExample: true,
       },
     });
@@ -107,36 +158,59 @@ export default function InputPage() {
                 Check your AI search visibility
               </h1>
               <p className="text-xl text-gray-600">
-                Enter your brand and up to 3 keywords to see how AI assistants mention you.
+                Enter your website URL and up to 3 keywords to see how AI assistants mention you.
               </p>
             </div>
 
             {/* Form Card */}
             <Card className="text-left bg-white border shadow-lg">
               <CardHeader>
-                <CardTitle className="text-gray-900 text-center">Brand Visibility Analysis</CardTitle>
+                <CardTitle className="text-gray-900 text-center">Website Visibility Analysis</CardTitle>
                 <CardDescription className="text-gray-600 text-center">
-                  Get insights into how AI assistants present your brand in search results
+                  Get insights into how AI assistants present your website in search results
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Brand Field */}
+                  {/* Website URL Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="brand">Brand or Website</Label>
+                    <Label htmlFor="website">Website URL</Label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <Input
-                        id="brand"
-                        type="text"
-                        placeholder="e.g., Kommunicate or kommunicate.io"
+                        id="website"
+                        type="url"
+                        placeholder="e.g., kommunicate.io or https://kommunicate.io"
                         value={brand}
-                        onChange={(e) => setBrand(e.target.value)}
+                        onChange={(e) => handleWebsiteChange(e.target.value)}
                         maxLength={100}
-                        className="pl-11 bg-white"
+                        className="pl-11 pr-11 bg-white"
                       />
+                      {/* DNS Status Indicator */}
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {dnsStatus === "checking" && (
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        )}
+                        {dnsStatus === "valid" && (
+                          <CheckCircle className="w-4 h-4 text-success" />
+                        )}
+                        {dnsStatus === "invalid" && (
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-500">{brand.length}/100 characters</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-500">{brand.length}/100 characters</p>
+                      {dnsStatus === "checking" && (
+                        <p className="text-sm text-muted-foreground">Checking domain...</p>
+                      )}
+                      {dnsStatus === "invalid" && (
+                        <p className="text-sm text-destructive">Invalid or unreachable website</p>
+                      )}
+                      {dnsStatus === "valid" && (
+                        <p className="text-sm text-success">Website verified</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Keywords Field */}
@@ -201,38 +275,13 @@ export default function InputPage() {
                     </div>
                   </div>
 
-                  {/* Card Count Selection */}
-                  <div className="space-y-3">
-                    <Label>Number of Insight Cards</Label>
-                    <RadioGroup value={cardCount} onValueChange={(value: "4" | "5") => setCardCount(value)}>
-                      <div className="flex items-center space-x-6">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="4" id="cards-4" />
-                          <Label htmlFor="cards-4" className="flex items-center space-x-2 cursor-pointer">
-                            <Grid2X2 className="w-4 h-4" />
-                            <span>4 Cards</span>
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="5" id="cards-5" />
-                          <Label htmlFor="cards-5" className="flex items-center space-x-2 cursor-pointer">
-                            <Grid3X3 className="w-4 h-4" />
-                            <span>5 Cards</span>
-                          </Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                    <p className="text-sm text-gray-500">
-                      Choose the number of insight cards to display in your results
-                    </p>
-                  </div>
 
                   {/* Submit Button */}
                   <Button
                     type="submit"
                     variant="hero"
                     className="w-full"
-                    disabled={isLoading || !brand.trim() || keywords.length === 0}
+                    disabled={isLoading || !brand.trim() || keywords.length === 0 || dnsStatus !== "valid"}
                     size="lg"
                   >
                     {isLoading ? (
@@ -261,11 +310,12 @@ export default function InputPage() {
                     </Button>
                   </div>
                 </form>
-                <div className="mt-6 p-6 rounded-lg bg-muted/50 border">
+                  <div className="mt-6 p-6 rounded-lg bg-muted/50 border">
                   <h4 className="font-semibold mb-3">Analysis Output</h4>
                   <div className="text-sm text-muted-foreground space-y-2">
-                    <p>• <strong>AI Share of Answers:</strong> Your brand appears in 23 of 100 queries (23%)</p>
-                    <p>• <strong>Competitor Analysis:</strong> Top 5 competitors and their mention frequency</p>
+                    <p>• <strong>AI Provider Share:</strong> ChatGPT 45%, Perplexity 25%</p>
+                    <p>• <strong>Keyword-Specific Insights:</strong> Separate analysis for each keyword</p>
+                    <p>• <strong>Competitor Analysis:</strong> Top competitors and their mention frequency</p>
                     <p>• <strong>Source Influence:</strong> Which websites shape AI responses about your industry</p>
                     <p>• <strong>Narrative Gaps:</strong> Features competitors get credited for that you don't</p>
                     <p>• <strong>Recommended Actions:</strong> Specific steps to improve AI visibility</p>
@@ -276,7 +326,7 @@ export default function InputPage() {
 
             {/* Footer Note */}
             <p className="text-sm text-gray-500">
-              Insights are based on what AI assistants say—not on scraping your site.
+              Insights are based on what AI assistants say about your website—not on scraping your site.
             </p>
           </div>
         </main>

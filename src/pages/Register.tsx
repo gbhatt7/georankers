@@ -4,24 +4,32 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
 
 const Register = () => {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [appName, setAppName] = useState(""); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const { register, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -41,12 +49,14 @@ const Register = () => {
     }
 
     try {
-      await register(email, password, name);
+      await register(email, password, firstName, lastName, appName || "DefaultApp");
       toast({
         title: "Account created!",
         description: "Welcome to AI Search Visibility Checker.",
       });
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -58,7 +68,6 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-      
       <Card className="w-full max-w-md bg-gradient-card border-0 shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-blue-600">
@@ -70,18 +79,49 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* First & Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Enter your last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="bg-background"
+                />
+              </div>
+            </div>
+
+            {/* App Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="appName">Application Name</Label>
               <Input
-                id="name"
+                id="appName"
                 type="text"
-                placeholder="Enter your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your application name"
+                value={appName}
+                onChange={(e) => setAppName(e.target.value)}
                 required
                 className="bg-background"
               />
             </div>
+
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -94,6 +134,8 @@ const Register = () => {
                 className="bg-background"
               />
             </div>
+
+            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -121,6 +163,8 @@ const Register = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Confirm Password */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -133,6 +177,8 @@ const Register = () => {
                 className="bg-background"
               />
             </div>
+
+            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
